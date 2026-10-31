@@ -1,43 +1,53 @@
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 def test_session_storage_auth():
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+    driver = webdriver.Chrome()
     wait = WebDriverWait(driver, 10)
 
     try:
-        # 1. Открываем учебную страницу (вместо gitflic.ru)
-        driver.get("https://the-internet.herokuapp.com/cookie/simple")
+        # Открываем GitFlic
+        driver.get("https://gitflic.ru/")
 
-        # --- Пользователь 1 (имитация) ---
-        # Добавляем простую куку, которая означает «пользователь 1»
-        driver.add_cookie({"name": "user_id", "value": "101", "domain": "the-internet.herokuapp.com"})
+        # Cookie пользователя 1
+        driver.add_cookie({
+            "name": "SESSION",
+            "value": "NDkwZDE5ZjYtNzI5Yy00NjFhLWJiNDYtNGUxNGZlOTAwOTNj",
+            "path": "/"
+        })
+
+        # Обновляем страницу
         driver.refresh()
 
-        # Сохраняем URL и текст, который зависит от куки
-        url_user1 = driver.current_url
-        content_text_1 = wait.until(EC.visibility_of_element_located((By.ID, "content"))).text
+        # Переходим в профиль пользователя 1
+        driver.get("https://gitflic.ru/user/airsworld")
 
-        # --- Разлогин (очистка кук) ---
+        # Сохраняем URL пользователя 1
+        url_user_1 = driver.current_url
+
+        # Очищаем cookie
         driver.delete_all_cookies()
+
+        # Cookie пользователя 2
+        driver.add_cookie({
+            "name": "SESSION",
+            "value": "ZDJhNDcyODUtNWI3Yy00ZjI4LTk1MDYtYTZiZTAyY2NjMzBi",
+            "path": "/"
+        })
+
+        # Обновляем страницу
         driver.refresh()
 
-        # --- Пользователь 2 (имитация) ---
-        # Добавляем куку для «пользователя 2»
-        driver.add_cookie({"name": "user_id", "value": "202", "domain": "the-internet.herokuapp.com"})
-        driver.refresh()
+        # Переходим в профиль пользователя 2
+        driver.get("https://gitflic.ru/user/s4murai")
 
-        # Сохраняем URL и текст для пользователя 2
-        url_user2 = driver.current_url
-        content_text_2 = wait.until(EC.visibility_of_element_located((By.ID, "content"))).text
+        # Сохраняем URL пользователя 2
+        url_user_2 = driver.current_url
 
-        # Проверка: URL могут совпадать (страница одна), но состояние должно быть разным
-        assert url_user1 == url_user2, "На этой странице URL всегда одинаковый — это нормально"
-        assert content_text_1 != content_text_2, f"Содержимое должно отличаться: {content_text_1} vs {content_text_2}"
+        # Проверяем, что URL отличаются
+        assert url_user_1 != url_user_2
 
     finally:
         driver.quit()
